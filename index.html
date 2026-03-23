@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shape Explorer — 1.G.A.1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap');
+
+  :root {
+    --bg: #f0f4ff;
+    --card: #ffffff;
+    --primary: #4361ee;
+    --secondary: #f72585;
+    --accent: #4cc9f0;
+    --green: #06d6a0;
+    --yellow: #ffd166;
+    --orange: #f4a261;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e2e8f0;
+    --shadow: 0 4px 24px rgba(67,97,238,0.10);
+    --radius: 18px;
+    --hit-face: #f72585;
+    --hit-edge: #ff6b35;
+    --hit-vertex: #ffd166;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Bubbly background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -120px; left: -120px;
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, #c7d2fe 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -80px; right: -80px;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, #fce7f3 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  header {
+    background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(67,97,238,0.3);
+    position: relative; z-index: 10;
+  }
+  .logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.7rem;
+    color: white;
+    letter-spacing: 0.5px;
+  }
+  .logo span { color: var(--yellow); }
+  .standard-badge {
+    background: rgba(255,255,255,0.18);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  .app-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 360px;
+    gap: 0;
+    min-height: calc(100vh - 62px);
+    position: relative; z-index: 1;
+  }
+
+  /* LEFT SIDEBAR — Shape Picker */
+  .sidebar {
+    background: white;
+    border-right: 2px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .sidebar-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    padding-left: 4px;
+  }
+  .shape-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    background: var(--bg);
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    transition: all 0.18s;
+    text-align: left;
+  }
+  .shape-btn:hover { background: #e0e7ff; border-color: var(--primary); }
+  .shape-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(67,97,238,0.35);
+  }
+  .shape-icon { font-size: 1.5rem; }
+
+  /* LEVEL SELECTOR */
+  .level-strip {
+    background: white;
+    border-bottom: 2px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .level-label { font-weight: 800; font-size: 0.9rem; color: var(--muted); margin-right: 6px; }
+  .level-chip {
+    padding: 7px 18px;
+    border-radius: 20px;
+    border: 2px solid var(--border);
+    background: white;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.16s;
+    color: var(--text);
+  }
+  .level-chip:hover { border-color: var(--primary); color: var(--primary); }
+  .level-chip.active-level {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 2px 10px rgba(67,97,238,0.3);
+  }
+  .level-chip.lv2.active-level { background: var(--secondary); border-color: var(--secondary); }
+  .level-chip.lv3.active-level { background: #7209b7; border-color: #7209b7; }
+
+  /* CENTER — Canvas */
+  .canvas-area {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  #three-canvas {
+    width: 100%;
+    flex: 1;
+    display: block;
+    cursor: grab;
+  }
+  #three-canvas:active { cursor: grabbing; }
+
+  .canvas-instructions {
+    text-align: center;
+    padding: 10px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 600;
+    background: white;
+    border-top: 2px solid var(--border);
+  }
+
+  /* RIGHT PANEL — Info & Tasks */
+  .info-panel {
+    background: white;
+    border-left: 2px solid var(--border);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    overflow-y: auto;
+  }
+
+  .shape-name-display {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: var(--primary);
+    text-align: center;
+    padding-bottom: 12px;
+    border-bottom: 2px dashed var(--border);
+  }
+
+  /* Counter cards */
+  .counters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .counter-card {
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 800;
+    font-size: 1rem;
+    transition: transform 0.12s;
+  }
+  .counter-card.faces { background: #fce7f3; color: #9d174d; }
+  .counter-card.edges { background: #fff7ed; color: #9a3412; }
+  .counter-card.vertices { background: #fefce8; color: #854d0e; }
+  .counter-label { display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+  .counter-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    display: inline-block;
+  }
+  .faces .counter-dot { background: var(--hit-face); }
+  .edges .counter-dot { background: var(--hit-edge); }
+  .vertices .counter-dot { background: var(--hit-vertex); }
+  .counter-num {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+  }
+  .counter-frac {
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.7;
+  }
+
+  /* Task box */
+  .task-box {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+    border: 2px solid #c7d2fe;
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .task-box h3 {
+    font-family: 'Fredoka One', cursive;
+    color: var(--primary);
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+  .task-box p { font-size: 0.9rem; color: #374151; line-height: 1.5; font-weight: 600; }
+
+  /* Quiz panel */
+  .quiz-box {
+    background: linear-gradient(135deg, #fdf4ff 0%, #f3e8ff 100%);
+    border: 2px solid #d8b4fe;
+    border-radius: 14px;
+    padding: 16px;
+    display: none;
+  }
+  .quiz-box.visible { display: block; }
+  .quiz-box h3 {
+    font-family: 'Fredoka One', cursive;
+    color: #7209b7;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+  .quiz-question { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+  .quiz-options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .quiz-opt {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 2px solid #d8b4fe;
+    background: white;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .quiz-opt:hover { background: #f3e8ff; }
+  .quiz-opt.correct { background: var(--green); border-color: var(--green); color: white; }
+  .quiz-opt.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .quiz-feedback {
+    margin-top: 10px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    min-height: 24px;
+  }
+  .quiz-next {
+    margin-top: 12px;
+    padding: 9px 24px;
+    background: #7209b7;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: none;
+  }
+  .quiz-next:hover { background: #6d28d9; }
+
+  /* Compare mode */
+  .compare-box {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 2px solid #6ee7b7;
+    border-radius: 14px;
+    padding: 16px;
+    display: none;
+  }
+  .compare-box.visible { display: block; }
+  .compare-box h3 { font-family: 'Fredoka One', cursive; color: #065f46; font-size: 1.1rem; margin-bottom: 10px; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .compare-table th { background: #065f46; color: white; padding: 6px 8px; text-align: center; font-weight: 800; }
+  .compare-table td { padding: 6px 8px; text-align: center; border: 1px solid #6ee7b7; font-weight: 700; }
+  .compare-table tr:nth-child(even) td { background: #d1fae5; }
+  .highlight-row td { background: #fef3c7 !important; font-weight: 900; }
+
+  /* Reset button */
+  .reset-btn {
+    width: 100%;
+    padding: 12px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { border-color: var(--secondary); color: var(--secondary); }
+
+  /* Success state */
+  .success-banner {
+    display: none;
+    text-align: center;
+    background: var(--green);
+    color: white;
+    padding: 14px;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    animation: pop 0.4s ease;
+  }
+  .success-banner.show { display: block; }
+  @keyframes pop {
+    0% { transform: scale(0.85); opacity: 0; }
+    70% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Score strip */
+  .score-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+  .score-val { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: var(--primary); }
+  .click-counter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--muted);
+    border: 2px solid var(--border);
+  }
+  .click-counter span { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: var(--secondary); }
+
+  /* 2D shapes section */
+  .shapes-2d-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .shape-2d-card {
+    background: var(--bg);
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .shape-2d-card:hover { border-color: var(--primary); background: #e0e7ff; }
+  .shape-2d-card.active-2d { border-color: var(--primary); background: var(--primary); }
+  .shape-2d-card.active-2d svg path, .shape-2d-card.active-2d svg polygon, .shape-2d-card.active-2d svg rect, .shape-2d-card.active-2d svg circle { stroke: white; }
+  .shape-2d-card.active-2d .s2d-name { color: white; }
+  .s2d-name { font-weight: 800; font-size: 0.78rem; color: var(--text); margin-top: 6px; }
+
+  /* 2D canvas */
+  #canvas-2d {
+    width: 100%;
+    flex: 1;
+    background: #f8fafc;
+    display: none;
+  }
+
+  .mode-toggle {
+    display: flex;
+    gap: 0;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 4px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .mode-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(67,97,238,0.25); }
+
+  @media (max-width: 900px) {
+    .app-layout { grid-template-columns: 1fr; }
+    .sidebar, .info-panel { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Shape <span>Explorer</span> ✦</div>
+  <div class="standard-badge">1.G.A.1</div>
+</header>
+
+<div class="app-layout">
+
+  <!-- LEFT: Shape picker -->
+  <aside class="sidebar">
+    <div class="sidebar-title">3D Shapes</div>
+    <button class="shape-btn active" data-shape="cube" onclick="selectShape('cube')">
+      <span class="shape-icon">🧊</span> Cube
+    </button>
+    <button class="shape-btn" data-shape="rect-prism" onclick="selectShape('rect-prism')">
+      <span class="shape-icon">📦</span> Rectangular Prism
+    </button>
+    <button class="shape-btn" data-shape="cylinder" onclick="selectShape('cylinder')">
+      <span class="shape-icon">🥫</span> Cylinder
+    </button>
+    <button class="shape-btn" data-shape="cone" onclick="selectShape('cone')">
+      <span class="shape-icon">🍦</span> Cone
+    </button>
+    <button class="shape-btn" data-shape="sphere" onclick="selectShape('sphere')">
+      <span class="shape-icon">🔵</span> Sphere
+    </button>
+    <button class="shape-btn" data-shape="triangular-prism" onclick="selectShape('triangular-prism')">
+      <span class="shape-icon">🔺</span> Triangular Prism
+    </button>
+    <button class="shape-btn" data-shape="pyramid" onclick="selectShape('pyramid')">
+      <span class="shape-icon">🏔️</span> Square Pyramid
+    </button>
+
+    <div class="sidebar-title" style="margin-top:16px;">2D Shapes</div>
+    <button class="shape-btn" data-shape="2d" onclick="selectShape('2d')">
+      <span class="shape-icon">📐</span> 2D Shapes
+    </button>
+  </aside>
+
+  <!-- CENTER: Canvas + level strip -->
+  <main class="canvas-area">
+    <div class="level-strip">
+      <span class="level-label">LEVEL:</span>
+      <button class="level-chip active-level" onclick="setLevel(1)">⭐ Count &amp; Click</button>
+      <button class="level-chip lv2" onclick="setLevel(2)">⭐⭐ Quiz Me</button>
+      <button class="level-chip lv3" onclick="setLevel(3)">⭐⭐⭐ Compare</button>
+    </div>
+    <canvas id="three-canvas"></canvas>
+    <canvas id="canvas-2d"></canvas>
+    <div class="canvas-instructions" id="canvas-hint">
+      🖱️ Drag to rotate · Click a <span style="color:var(--hit-face);font-weight:900;">face</span>, <span style="color:var(--hit-edge);font-weight:900;">edge</span>, or <span style="color:var(--hit-vertex);font-weight:900;">vertex</span> to count it
+    </div>
+  </main>
+
+  <!-- RIGHT: Info panel -->
+  <aside class="info-panel">
+
+    <div class="score-strip">
+      🏆 Score: <span class="score-val" id="score-display">0</span>
+      <div class="click-counter">👆 Clicks: <span id="click-display">0</span></div>
+    </div>
+
+    <div class="shape-name-display" id="shape-name-display">Cube</div>
+
+    <div class="counters" id="counters-area">
+      <div class="counter-card faces">
+        <div class="counter-label"><span class="counter-dot"></span>Faces</div>
+        <div><span class="counter-num" id="cnt-faces">0</span><span class="counter-frac" id="frac-faces"> / 6</span></div>
+      </div>
+      <div class="counter-card edges">
+        <div class="counter-label"><span class="counter-dot"></span>Edges</div>
+        <div><span class="counter-num" id="cnt-edges">0</span><span class="counter-frac" id="frac-edges"> / 12</span></div>
+      </div>
+      <div class="counter-card vertices">
+        <div class="counter-label"><span class="counter-dot"></span>Vertices</div>
+        <div><span class="counter-num" id="cnt-vertices">0</span><span class="counter-frac" id="frac-vertices"> / 8</span></div>
+      </div>
+    </div>
+
+    <div class="success-banner" id="success-banner">🎉 All counted!</div>
+
+    <!-- Level 1 task -->
+    <div class="task-box" id="task-box">
+      <h3>🎯 Your Task</h3>
+      <p id="task-text">Click every <strong>face</strong>, <strong>edge</strong>, and <strong>vertex</strong> on the cube. Watch them turn colors as you count! Drag to spin the shape and find hidden ones.</p>
+    </div>
+
+    <!-- Level 2 quiz -->
+    <div class="quiz-box" id="quiz-box">
+      <h3>🧠 Quiz Time!</h3>
+      <div class="quiz-question" id="quiz-q"></div>
+      <div class="quiz-options" id="quiz-opts"></div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+      <button class="quiz-next" id="quiz-next" onclick="nextQuestion()">Next →</button>
+    </div>
+
+    <!-- Level 3 compare -->
+    <div class="compare-box" id="compare-box">
+      <h3>📊 Shape Comparison</h3>
+      <table class="compare-table" id="compare-table">
+        <thead><tr><th>Shape</th><th>Faces</th><th>Edges</th><th>Vertices</th></tr></thead>
+        <tbody id="compare-tbody"></tbody>
+      </table>
+    </div>
+
+    <button class="reset-btn" onclick="resetShape()">↺ Reset Shape</button>
+
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════
+//  SHAPE DATA
+// ═══════════════════════════════════════════════
+const SHAPE_DATA = {
+  'cube':             { name:'Cube',              faces:6,  edges:12, vertices:8  },
+  'rect-prism':       { name:'Rectangular Prism', faces:6,  edges:12, vertices:8  },
+  'cylinder':         { name:'Cylinder',          faces:2,  edges:0,  vertices:0  },
+  'cone':             { name:'Cone',              faces:1,  edges:0,  vertices:1  },
+  'sphere':           { name:'Sphere',            faces:0,  edges:0,  vertices:0  },
+  'triangular-prism': { name:'Triangular Prism',  faces:5,  edges:9,  vertices:6  },
+  'pyramid':          { name:'Square Pyramid',    faces:5,  edges:8,  vertices:5  },
+};
+
+const ALL_SHAPES_COMPARE = [
+  { name:'Cube',              faces:6,  edges:12, vertices:8  },
+  { name:'Rect. Prism',       faces:6,  edges:12, vertices:8  },
+  { name:'Triangular Prism',  faces:5,  edges:9,  vertices:6  },
+  { name:'Square Pyramid',    faces:5,  edges:8,  vertices:5  },
+  { name:'Cylinder',          faces:2,  edges:0,  vertices:0  },
+  { name:'Cone',              faces:1,  edges:0,  vertices:1  },
+  { name:'Sphere',            faces:0,  edges:0,  vertices:0  },
+];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let currentShape = 'cube';
+let currentLevel = 1;
+let score = 0;
+// Track by object reference — each mesh can only be clicked once, regardless of which side is hit
+let clickedMeshes = new WeakSet();
+let clickedFaces = new Set();
+let clickedEdges = new Set();
+let clickedVertices = new Set();
+let quizScore = 0, quizTotal = 0;
+let currentQuizQ = null;
+
+// Three.js objects
+let scene, camera, renderer, shapeGroup;
+let faceObjects = [], edgeObjects = [], vertexObjects = [];
+let isMouseDown = false, lastMouse = {x:0,y:0};
+let raycaster, mouse;
+
+// ═══════════════════════════════════════════════
+//  INIT THREE.JS
+// ═══════════════════════════════════════════════
+function init3D() {
+  const canvas = document.getElementById('three-canvas');
+  const W = canvas.parentElement.clientWidth;
+  const H = canvas.parentElement.clientHeight - 60;
+  canvas.width = W; canvas.height = H;
+  canvas.style.height = H + 'px';
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf0f4ff);
+
+  camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 100);
+  camera.position.set(3, 2.5, 4);
+  camera.lookAt(0,0,0);
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.shadowMap.enabled = true;
+
+  // Lights
+  const amb = new THREE.AmbientLight(0xffffff, 0.65);
+  scene.add(amb);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+  dir.position.set(5,8,6);
+  dir.castShadow = true;
+  scene.add(dir);
+  const dir2 = new THREE.DirectionalLight(0xc7d2fe, 0.4);
+  dir2.position.set(-4,-3,-4);
+  scene.add(dir2);
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  shapeGroup = new THREE.Group();
+  scene.add(shapeGroup);
+
+  // Grid
+  const grid = new THREE.GridHelper(10, 10, 0xdde1f0, 0xdde1f0);
+  grid.position.y = -1.5;
+  scene.add(grid);
+
+  buildShape(currentShape);
+  animate();
+  attachEvents(canvas);
+}
+
+// ═══════════════════════════════════════════════
+//  ANIMATE
+// ═══════════════════════════════════════════════
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════════════
+//  BUILD SHAPE
+// ═══════════════════════════════════════════════
+const BASE_COLOR   = 0x4361ee;
+const FACE_HIT     = 0xf72585;
+const EDGE_HIT     = 0xff6b35;
+const VERTEX_HIT   = 0xffd166;
+const EDGE_COLOR   = 0x1a1a2e;
+const VERTEX_COLOR = 0x3a0ca3;
+
+function clearScene() {
+  while(shapeGroup.children.length) shapeGroup.remove(shapeGroup.children[0]);
+  faceObjects = []; edgeObjects = []; vertexObjects = [];
+  clickedMeshes = new WeakSet();
+  clickedFaces.clear(); clickedEdges.clear(); clickedVertices.clear();
+}
+
+function buildShape(shape) {
+  clearScene();
+  const data = SHAPE_DATA[shape];
+  if (!data) return;
+
+  switch(shape) {
+    case 'cube':            buildBox(1.4,1.4,1.4); break;
+    case 'rect-prism':      buildBox(2.0,1.1,1.3); break;
+    case 'cylinder':        buildCylinder(); break;
+    case 'cone':            buildCone(); break;
+    case 'sphere':          buildSphere(); break;
+    case 'triangular-prism':buildTriPrism(); break;
+    case 'pyramid':         buildPyramid(); break;
+  }
+  updateCounters();
+}
+
+// --- BOX (cube + rect prism) ---
+function buildBox(w,h,d) {
+  const halfW=w/2, halfH=h/2, halfD=d/2;
+  const faceConfigs = [
+    { pos:[0,0,halfD],   rot:[0,0,0],             fw:w, fh:h },
+    { pos:[0,0,-halfD],  rot:[0,Math.PI,0],        fw:w, fh:h },
+    { pos:[halfW,0,0],   rot:[0,-Math.PI/2,0],     fw:d, fh:h },
+    { pos:[-halfW,0,0],  rot:[0,Math.PI/2,0],      fw:d, fh:h },
+    { pos:[0,halfH,0],   rot:[-Math.PI/2,0,0],     fw:w, fh:d },
+    { pos:[0,-halfH,0],  rot:[Math.PI/2,0,0],      fw:w, fh:d },
+  ];
+  faceConfigs.forEach((fc, i) => {
+    const geo = new THREE.PlaneGeometry(fc.fw, fc.fh);
+    const mat = new THREE.MeshPhongMaterial({ color: BASE_COLOR, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(...fc.pos);
+    mesh.rotation.set(...fc.rot);
+    mesh.userData = { type:'face', id:i };
+    shapeGroup.add(mesh);
+    faceObjects.push(mesh);
+  });
+
+  // 12 edges
+  const edges = [
+    // Bottom
+    {p:[-halfW,-halfH,-halfD], l:w, axis:'x'},
+    {p:[-halfW,-halfH, halfD], l:w, axis:'x'},
+    {p:[-halfW,-halfH,-halfD], l:d, axis:'z'},
+    {p:[ halfW,-halfH,-halfD], l:d, axis:'z'},
+    // Top
+    {p:[-halfW, halfH,-halfD], l:w, axis:'x'},
+    {p:[-halfW, halfH, halfD], l:w, axis:'x'},
+    {p:[-halfW, halfH,-halfD], l:d, axis:'z'},
+    {p:[ halfW, halfH,-halfD], l:d, axis:'z'},
+    // Verticals
+    {p:[-halfW,-halfH,-halfD], l:h, axis:'y'},
+    {p:[ halfW,-halfH,-halfD], l:h, axis:'y'},
+    {p:[-halfW,-halfH, halfD], l:h, axis:'y'},
+    {p:[ halfW,-halfH, halfD], l:h, axis:'y'},
+  ];
+  edges.forEach((e,i) => {
+    const geo = new THREE.CylinderGeometry(0.045,0.045,e.l,8);
+    const mat = new THREE.MeshPhongMaterial({color:EDGE_COLOR});
+    const mesh = new THREE.Mesh(geo, mat);
+    const cx = e.p[0]+(e.axis==='x'?e.l/2:0);
+    const cy = e.p[1]+(e.axis==='y'?e.l/2:0);
+    const cz = e.p[2]+(e.axis==='z'?e.l/2:0);
+    mesh.position.set(cx,cy,cz);
+    if(e.axis==='x') mesh.rotation.z=Math.PI/2;
+    if(e.axis==='z') mesh.rotation.x=Math.PI/2;
+    mesh.userData={type:'edge',id:i};
+    shapeGroup.add(mesh);
+    edgeObjects.push(mesh);
+  });
+
+  // 8 vertices
+  const corners = [
+    [-halfW,-halfH,-halfD],[ halfW,-halfH,-halfD],
+    [-halfW, halfH,-halfD],[ halfW, halfH,-halfD],
+    [-halfW,-halfH, halfD],[ halfW,-halfH, halfD],
+    [-halfW, halfH, halfD],[ halfW, halfH, halfD],
+  ];
+  corners.forEach((c,i) => {
+    const geo = new THREE.SphereGeometry(0.11,16,16);
+    const mat = new THREE.MeshPhongMaterial({color:VERTEX_COLOR});
+    const mesh = new THREE.Mesh(geo,mat);
+    mesh.position.set(...c);
+    mesh.userData={type:'vertex',id:i};
+    shapeGroup.add(mesh);
+    vertexObjects.push(mesh);
+  });
+}
+
+// --- CYLINDER ---
+// Grade 1: 2 flat faces (circles), 0 edges, 0 vertices
+// Curved surface is visual only — not clickable
+function buildCylinder() {
+  const r=0.8, h=1.5, segs=32;
+
+  // Curved body — visual only, no userData, not in faceObjects
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(r,r,h,segs,1,true),
+    new THREE.MeshPhongMaterial({color:BASE_COLOR, side:THREE.DoubleSide})
+  );
+  shapeGroup.add(body); // NOT pushed to faceObjects
+
+  // Top flat face — clickable
+  const top = new THREE.Mesh(
+    new THREE.CircleGeometry(r,segs),
+    new THREE.MeshPhongMaterial({color:0x7c3aed, side:THREE.DoubleSide})
+  );
+  top.rotation.x=-Math.PI/2; top.position.y=h/2;
+  top.userData={type:'face',id:0};
+  shapeGroup.add(top); faceObjects.push(top);
+
+  // Bottom flat face — clickable
+  const bot = new THREE.Mesh(
+    new THREE.CircleGeometry(r,segs),
+    new THREE.MeshPhongMaterial({color:0x7c3aed, side:THREE.DoubleSide})
+  );
+  bot.rotation.x=Math.PI/2; bot.position.y=-h/2;
+  bot.userData={type:'face',id:1};
+  shapeGroup.add(bot); faceObjects.push(bot);
+  // No edges, no vertices in grade 1
+}
+
+// --- CONE ---
+// Grade 1: 1 flat face (circle base), 0 edges, 1 vertex (apex point)
+// Curved surface is visual only — not clickable
+function buildCone() {
+  const r=0.85, h=1.7, segs=32;
+
+  // Curved body — visual only
+  const body=new THREE.Mesh(
+    new THREE.ConeGeometry(r,h,segs,1,true),
+    new THREE.MeshPhongMaterial({color:BASE_COLOR, side:THREE.DoubleSide})
+  );
+  shapeGroup.add(body); // NOT pushed to faceObjects
+
+  // Flat circular base — clickable face
+  const base=new THREE.Mesh(
+    new THREE.CircleGeometry(r,segs),
+    new THREE.MeshPhongMaterial({color:0x7c3aed, side:THREE.DoubleSide})
+  );
+  base.rotation.x=Math.PI/2; base.position.y=-h/2;
+  base.userData={type:'face',id:0};
+  shapeGroup.add(base); faceObjects.push(base);
+
+  // Apex vertex — clickable
+  const vMesh=new THREE.Mesh(
+    new THREE.SphereGeometry(0.11,16,16),
+    new THREE.MeshPhongMaterial({color:VERTEX_COLOR})
+  );
+  vMesh.position.y=h/2;
+  vMesh.userData={type:'vertex',id:0};
+  shapeGroup.add(vMesh); vertexObjects.push(vMesh);
+  // No edges in grade 1
+}
+
+// --- SPHERE ---
+// Grade 1: 0 faces, 0 edges, 0 vertices — fully curved, nothing to click
+function buildSphere() {
+  const mesh=new THREE.Mesh(
+    new THREE.SphereGeometry(1,32,32),
+    new THREE.MeshPhongMaterial({color:BASE_COLOR})
+  );
+  // Visual only — no userData, not in any clickable list
+  shapeGroup.add(mesh);
+}
+
+// --- TRIANGULAR PRISM ---
+function buildTriPrism() {
+  const h=1.5, hs=0.9;
+  // Back triangle (facing -Z): wind CCW when viewed from -Z → use CW order so normal faces -Z
+  const A=[0,hs,0], B=[-hs,-hs/2,0], C=[hs,-hs/2,0];
+  const Af=[0,hs,h], Bf=[-hs,-hs/2,h], Cf=[hs,-hs/2,h];
+
+  function makeTri(p0,p1,p2,color,id) {
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([
+      p0[0],p0[1],p0[2], p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]
+    ],3));
+    geo.computeVertexNormals();
+    const mat=new THREE.MeshPhongMaterial({color, side:THREE.DoubleSide});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.userData={type:'face',id};
+    shapeGroup.add(mesh); faceObjects.push(mesh);
+  }
+  function makeQuad(p0,p1,p2,p3,color,id) {
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute([
+      p0[0],p0[1],p0[2], p1[0],p1[1],p1[2], p2[0],p2[1],p2[2],
+      p0[0],p0[1],p0[2], p2[0],p2[1],p2[2], p3[0],p3[1],p3[2]
+    ],3));
+    geo.computeVertexNormals();
+    const mat=new THREE.MeshPhongMaterial({color, side:THREE.DoubleSide});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.userData={type:'face',id};
+    shapeGroup.add(mesh); faceObjects.push(mesh);
+  }
+
+  // Back face: normal points -Z, wind A,B,C so that cross(AB,AC) points -Z
+  makeTri(A,C,B, BASE_COLOR, 0);
+  // Front face: normal points +Z, wind Af,Bf,Cf CCW from front
+  makeTri(Af,Bf,Cf, BASE_COLOR, 1);
+  // 3 rectangular side faces — wind outward
+  makeQuad(B,A,Af,Bf, 0x7c3aed, 2);  // left side
+  makeQuad(A,C,Cf,Af, 0x7c3aed, 3);  // right side
+  makeQuad(C,B,Bf,Cf, 0x7c3aed, 4);  // bottom side
+
+  // 9 edges
+  const edgePairs=[
+    [A,B],[B,C],[C,A],[Af,Bf],[Bf,Cf],[Cf,Af],[A,Af],[B,Bf],[C,Cf]
+  ];
+  edgePairs.forEach((ep,i) => {
+    const [p1,p2]=ep;
+    const dir=new THREE.Vector3(p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]);
+    const len=dir.length();
+    const geo=new THREE.CylinderGeometry(0.04,0.04,len,8);
+    const mat=new THREE.MeshPhongMaterial({color:EDGE_COLOR});
+    const mesh=new THREE.Mesh(geo,mat);
+    const mid=[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2,(p1[2]+p2[2])/2];
+    mesh.position.set(...mid);
+    dir.normalize();
+    const up=new THREE.Vector3(0,1,0);
+    const quat=new THREE.Quaternion().setFromUnitVectors(up,dir);
+    mesh.setRotationFromQuaternion(quat);
+    mesh.userData={type:'edge',id:i};
+    shapeGroup.add(mesh); edgeObjects.push(mesh);
+  });
+
+  // 6 vertices
+  [A,B,C,Af,Bf,Cf].forEach((v,i) => {
+    const geo=new THREE.SphereGeometry(0.1,16,16);
+    const mesh=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:VERTEX_COLOR}));
+    mesh.position.set(...v);
+    mesh.userData={type:'vertex',id:i};
+    shapeGroup.add(mesh); vertexObjects.push(mesh);
+  });
+}
+
+// --- SQUARE PYRAMID ---
+function buildPyramid() {
+  const s=1.2, h=1.6;
+  const apex=[0,h/2,0];
+  const base=[[-s/2,-h/2,-s/2],[s/2,-h/2,-s/2],[s/2,-h/2,s/2],[-s/2,-h/2,s/2]];
+
+  // Base (square) — normal points DOWN (-Y), wind CW from above
+  const bv=base;
+  const baseGeo=new THREE.BufferGeometry();
+  baseGeo.setAttribute('position',new THREE.Float32BufferAttribute([
+    bv[0][0],bv[0][1],bv[0][2], bv[2][0],bv[2][1],bv[2][2], bv[1][0],bv[1][1],bv[1][2],
+    bv[0][0],bv[0][1],bv[0][2], bv[3][0],bv[3][1],bv[3][2], bv[2][0],bv[2][1],bv[2][2],
+  ],3));
+  baseGeo.computeVertexNormals();
+  const baseMesh=new THREE.Mesh(baseGeo,new THREE.MeshPhongMaterial({color:0x7c3aed, side:THREE.DoubleSide}));
+  baseMesh.userData={type:'face',id:0};
+  shapeGroup.add(baseMesh); faceObjects.push(baseMesh);
+
+  // 4 triangular faces — wind so normal points outward
+  for(let i=0;i<4;i++){
+    const p0=base[i], p1=base[(i+1)%4], p2=apex;
+    // Outward normal: cross(p1-p0, p2-p0) should point away from center
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute([
+      p0[0],p0[1],p0[2], p1[0],p1[1],p1[2], p2[0],p2[1],p2[2]
+    ],3));
+    geo.computeVertexNormals();
+    const mat=new THREE.MeshPhongMaterial({color:BASE_COLOR, side:THREE.DoubleSide});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.userData={type:'face',id:i+1};
+    shapeGroup.add(mesh); faceObjects.push(mesh);
+  }
+
+  // 8 edges: 4 base + 4 lateral
+  const edgePairs=[];
+  for(let i=0;i<4;i++) edgePairs.push([base[i],base[(i+1)%4]]);
+  for(let i=0;i<4;i++) edgePairs.push([base[i],apex]);
+  edgePairs.forEach((ep,i) => {
+    const [p1,p2]=ep;
+    const dir=new THREE.Vector3(p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]);
+    const len=dir.length();
+    const geo=new THREE.CylinderGeometry(0.04,0.04,len,8);
+    const mat=new THREE.MeshPhongMaterial({color:EDGE_COLOR});
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set((p1[0]+p2[0])/2,(p1[1]+p2[1])/2,(p1[2]+p2[2])/2);
+    dir.normalize();
+    const up=new THREE.Vector3(0,1,0);
+    const quat=new THREE.Quaternion().setFromUnitVectors(up,dir);
+    mesh.setRotationFromQuaternion(quat);
+    mesh.userData={type:'edge',id:i};
+    shapeGroup.add(mesh); edgeObjects.push(mesh);
+  });
+
+  // 5 vertices: 4 base corners + apex
+  [...base, apex].forEach((v,i) => {
+    const geo=new THREE.SphereGeometry(0.1,16,16);
+    const mesh=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:VERTEX_COLOR}));
+    mesh.position.set(v[0],v[1],v[2]);
+    mesh.userData={type:'vertex',id:i};
+    shapeGroup.add(mesh); vertexObjects.push(mesh);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  MOUSE / INTERACTION
+// ═══════════════════════════════════════════════
+let totalClicks = 0;
+
+// Returns true if the target object's world position is blocked from the camera by any face.
+// We cast a ray from the camera toward the object's center; if any face mesh is hit
+// *closer* than the object itself (with a small epsilon), the object is hidden.
+function isOccluded(targetObj) {
+  // Get the world-space center of the target
+  const targetPos = new THREE.Vector3();
+  targetObj.getWorldPosition(targetPos);
+
+  // Direction from camera to target
+  const camPos = camera.position.clone();
+  const dir = targetPos.clone().sub(camPos).normalize();
+  const dist = camPos.distanceTo(targetPos);
+
+  const occludeRay = new THREE.Raycaster(camPos, dir, 0, dist - 0.05);
+
+  // Only faces can occlude — edges/vertices on top of each other don't block each other
+  const hits = occludeRay.intersectObjects(faceObjects);
+  for (const hit of hits) {
+    if (hit.object !== targetObj) return true; // something solid is in the way
+  }
+  return false;
+}
+
+function resolveHit(vHits, eHits, fHits) {
+  // Check hits in priority order: vertex > edge > face
+  // But skip anything occluded by a face in front of it
+  for (const h of vHits) { if (!isOccluded(h.object)) return h.object; }
+  for (const h of eHits) { if (!isOccluded(h.object)) return h.object; }
+  for (const h of fHits) { if (!isOccluded(h.object)) return h.object; }
+  return null;
+}
+
+function attachEvents(canvas) {
+  canvas.addEventListener('mousedown', e => { isMouseDown=true; lastMouse={x:e.clientX,y:e.clientY}; });
+  canvas.addEventListener('mouseup', e => { isMouseDown=false; });
+  canvas.addEventListener('mousemove', e => {
+    if(!isMouseDown) return;
+    const dx=e.clientX-lastMouse.x, dy=e.clientY-lastMouse.y;
+    shapeGroup.rotation.y += dx*0.01;
+    shapeGroup.rotation.x += dy*0.01;
+    lastMouse={x:e.clientX,y:e.clientY};
+  });
+
+  let mouseMovedAfterDown = false;
+  canvas.addEventListener('mousedown', () => { mouseMovedAfterDown = false; });
+  canvas.addEventListener('mousemove', () => { mouseMovedAfterDown = true; });
+
+  canvas.addEventListener('mouseup', e => {
+    if(mouseMovedAfterDown) return;
+    if(currentShape==='2d') return;
+    const rect=canvas.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/canvas.width)*2-1;
+    mouse.y=-((e.clientY-rect.top)/canvas.height)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+
+    const hit = resolveHit(
+      raycaster.intersectObjects(vertexObjects),
+      raycaster.intersectObjects(edgeObjects),
+      raycaster.intersectObjects(faceObjects)
+    );
+    if(hit) handleClick(hit);
+  });
+
+  // Touch support
+  let lastTouch=null, touchMoved=false;
+  canvas.addEventListener('touchstart', e=>{ lastTouch={x:e.touches[0].clientX,y:e.touches[0].clientY}; touchMoved=false; });
+  canvas.addEventListener('touchmove', e=>{
+    if(!lastTouch) return;
+    e.preventDefault();
+    touchMoved=true;
+    const dx=e.touches[0].clientX-lastTouch.x, dy=e.touches[0].clientY-lastTouch.y;
+    shapeGroup.rotation.y+=dx*0.012;
+    shapeGroup.rotation.x+=dy*0.012;
+    lastTouch={x:e.touches[0].clientX,y:e.touches[0].clientY};
+  },{passive:false});
+  canvas.addEventListener('touchend', e=>{
+    if(touchMoved || currentShape==='2d') return;
+    const touch=e.changedTouches[0];
+    const rect=canvas.getBoundingClientRect();
+    mouse.x=((touch.clientX-rect.left)/canvas.width)*2-1;
+    mouse.y=-((touch.clientY-rect.top)/canvas.height)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const hit = resolveHit(
+      raycaster.intersectObjects(vertexObjects),
+      raycaster.intersectObjects(edgeObjects),
+      raycaster.intersectObjects(faceObjects)
+    );
+    if(hit) handleClick(hit);
+  });
+}
+
+function handleClick(obj) {
+  if(currentLevel===2) return; // quiz mode — no manual clicking
+  const {type,id}=obj.userData;
+  if(!type) return;
+
+  totalClicks++;
+  document.getElementById('click-display').textContent = totalClicks;
+
+  // WeakSet tracks by object reference — prevents double-counting same mesh hit from back face
+  if(clickedMeshes.has(obj)) return;
+  clickedMeshes.add(obj);
+
+  if(type==='face'){
+    clickedFaces.add(id);
+    obj.material.color.setHex(FACE_HIT);
+    score++;
+  } else if(type==='edge'){
+    clickedEdges.add(id);
+    obj.material.color.setHex(EDGE_HIT);
+    score++;
+  } else if(type==='vertex'){
+    clickedVertices.add(id);
+    obj.material.color.setHex(VERTEX_HIT);
+    score++;
+  }
+  updateCounters();
+  updateScore();
+}
+
+// ═══════════════════════════════════════════════
+//  COUNTERS & UI
+// ═══════════════════════════════════════════════
+function updateCounters() {
+  const data=SHAPE_DATA[currentShape];
+  if(!data) return;
+  document.getElementById('cnt-faces').textContent=clickedFaces.size;
+  document.getElementById('cnt-edges').textContent=clickedEdges.size;
+  document.getElementById('cnt-vertices').textContent=clickedVertices.size;
+  document.getElementById('frac-faces').textContent=` / ${data.faces}`;
+  document.getElementById('frac-edges').textContent=` / ${data.edges}`;
+  document.getElementById('frac-vertices').textContent=` / ${data.vertices}`;
+
+  const done = clickedFaces.size>=data.faces && clickedEdges.size>=data.edges && clickedVertices.size>=data.vertices;
+  const banner=document.getElementById('success-banner');
+  if(done && data.faces+data.edges+data.vertices>0) {
+    banner.classList.add('show');
+    score += 5;
+    updateScore();
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+function updateScore() {
+  document.getElementById('score-display').textContent=score;
+}
+
+function resetShape() {
+  totalClicks = 0;
+  document.getElementById('click-display').textContent = '0';
+  buildShape(currentShape);
+  updateCounters();
+  document.getElementById('success-banner').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════
+//  SHAPE SELECTION
+// ═══════════════════════════════════════════════
+function selectShape(shape) {
+  currentShape=shape;
+  document.querySelectorAll('.shape-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.shape===shape);
+  });
+
+  const threeCanvas=document.getElementById('three-canvas');
+  const canvas2d=document.getElementById('canvas-2d');
+  const hint=document.getElementById('canvas-hint');
+  const countersArea=document.getElementById('counters-area');
+
+  if(shape==='2d'){
+    threeCanvas.style.display='none';
+    canvas2d.style.display='block';
+    hint.textContent='Click a 2D shape to explore its sides and corners';
+    countersArea.style.display='none';
+    document.getElementById('shape-name-display').textContent='2D Shapes';
+    document.getElementById('task-box').style.display='none';
+    init2D();
+  } else {
+    threeCanvas.style.display='block';
+    canvas2d.style.display='none';
+    const hintTexts = {
+      'sphere': '🖱️ Drag to rotate and explore — a sphere has no faces, edges, or vertices!',
+    };
+    hint.innerHTML = hintTexts[shape] ||
+      '🖱️ Drag to rotate · Click a <span style="color:var(--hit-face);font-weight:900;">face</span>, <span style="color:var(--hit-edge);font-weight:900;">edge</span>, or <span style="color:var(--hit-vertex);font-weight:900;">vertex</span> to count it';
+    countersArea.style.display='flex';
+    document.getElementById('task-box').style.display='block';
+    const data=SHAPE_DATA[shape];
+    document.getElementById('shape-name-display').textContent=data.name;
+    // Shape-specific task description
+    const taskTexts = {
+      'cylinder': `The cylinder has 2 flat faces (the circles on top and bottom). Click both flat faces, then find the 1 vertex at the tip! Curved surfaces are not faces in math.`,
+      'cone':     `The cone has 1 flat face (the circle on the bottom) and 1 vertex (the pointy tip). Click them both! The curved side is not a face.`,
+      'sphere':   `The sphere has no flat faces, no edges, and no vertices — it's completely curved! Just rotate it to explore its shape.`,
+    };
+    document.getElementById('task-text').textContent = taskTexts[shape] ||
+      `Click every face, edge, and vertex on the ${data.name.toLowerCase()}. Drag to spin it around and find the hidden ones!`;
+    buildShape(shape);
+    setLevel(currentLevel);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  LEVEL SYSTEM
+// ═══════════════════════════════════════════════
+function setLevel(level) {
+  currentLevel=level;
+  document.querySelectorAll('.level-chip').forEach((c,i)=>{
+    c.classList.toggle('active-level', i===level-1);
+  });
+
+  const quizBox=document.getElementById('quiz-box');
+  const compareBox=document.getElementById('compare-box');
+  const taskBox=document.getElementById('task-box');
+  const countersArea=document.getElementById('counters-area');
+
+  quizBox.classList.remove('visible');
+  compareBox.classList.remove('visible');
+  taskBox.style.display='block';
+  countersArea.style.display='flex';
+
+  if(level===1){
+    taskBox.style.display='block';
+    resetShape();
+  } else if(level===2){
+    taskBox.style.display='none';
+    quizBox.classList.add('visible');
+    startQuiz();
+  } else if(level===3){
+    compareBox.classList.add('visible');
+    buildCompareTable();
+    resetShape();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  QUIZ (Level 2)
+// ═══════════════════════════════════════════════
+const QUIZ_BANK = () => {
+  const qs=[];
+  Object.entries(SHAPE_DATA).forEach(([key,d])=>{
+    qs.push({
+      q:`How many <strong>faces</strong> does a <em>${d.name}</em> have?`,
+      answer:d.faces,
+      shape:key
+    },{
+      q:`How many <strong>edges</strong> does a <em>${d.name}</em> have?`,
+      answer:d.edges,
+      shape:key
+    },{
+      q:`How many <strong>vertices</strong> does a <em>${d.name}</em> have?`,
+      answer:d.vertices,
+      shape:key
+    });
+  });
+  // Add comparison questions
+  // Comparison questions — using grade 1 correct counts
+  qs.push({q:'Which shape has <strong>MORE</strong> flat faces: a Cube or a Cylinder?', answer:'Cube (6)', choices:['Cube (6)','Cylinder (2)','Same']});
+  qs.push({q:'Which shape has <strong>ZERO</strong> vertices AND zero edges?', answer:'Cylinder', choices:['Cone','Sphere','Cylinder','Both B & C']});
+  qs.push({q:'Which shape has <strong>NO</strong> flat faces at all?', answer:'Sphere', choices:['Cone','Sphere','Cylinder']});
+  qs.push({q:'Which shape has <strong>FEWER</strong> edges: a Cone or a Triangular Prism?', answer:'Cone (0)', choices:['Cone (0)','Triangular Prism (9)','Same']});
+  return shuffle(qs);
+};
+
+let quizBank=[], quizIdx=0;
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+
+function startQuiz(){
+  quizBank=QUIZ_BANK();
+  quizIdx=0; quizScore=0; quizTotal=0;
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(quizIdx>=quizBank.length) quizIdx=0;
+  const q=quizBank[quizIdx++];
+  currentQuizQ=q;
+  document.getElementById('quiz-q').innerHTML=q.q;
+  document.getElementById('quiz-feedback').textContent='';
+  document.getElementById('quiz-next').style.display='none';
+
+  // Build choices
+  let choices;
+  if(q.choices){
+    choices=q.choices;
+  } else {
+    // Number question — generate 4 choices including correct
+    const correct=q.answer;
+    const distractors=new Set([correct]);
+    while(distractors.size<4){
+      const v=Math.max(0, correct + (Math.random()>0.5?1:-1)*Math.floor(Math.random()*5+1));
+      distractors.add(v);
+    }
+    choices=shuffle([...distractors]);
+  }
+
+  const optsEl=document.getElementById('quiz-opts');
+  optsEl.innerHTML='';
+  choices.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='quiz-opt';
+    btn.textContent=c;
+    btn.onclick=()=>answerQuiz(c, btn);
+    optsEl.appendChild(btn);
+  });
+
+  // Show the shape on the 3D canvas
+  if(q.shape && SHAPE_DATA[q.shape]){
+    currentShape=q.shape;
+    buildShape(q.shape);
+    document.getElementById('shape-name-display').textContent=SHAPE_DATA[q.shape].name;
+  }
+}
+
+function answerQuiz(choice, btn){
+  const q=currentQuizQ;
+  const correct=String(q.answer);
+  const chosen=String(choice);
+  document.querySelectorAll('.quiz-opt').forEach(b=>b.disabled=true);
+  quizTotal++;
+  if(chosen===correct){
+    btn.classList.add('correct');
+    document.getElementById('quiz-feedback').innerHTML='<span style="color:#06d6a0;font-size:1.1rem;">✅ Correct!</span>';
+    quizScore++;
+    score+=3;
+    updateScore();
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.quiz-opt').forEach(b=>{
+      if(String(b.textContent)===correct) b.classList.add('correct');
+    });
+    document.getElementById('quiz-feedback').innerHTML=`<span style="color:#ef4444;">❌ The answer is <strong>${correct}</strong></span>`;
+  }
+  document.getElementById('quiz-next').style.display='block';
+}
+
+// ═══════════════════════════════════════════════
+//  COMPARE TABLE (Level 3)
+// ═══════════════════════════════════════════════
+function buildCompareTable(){
+  const tbody=document.getElementById('compare-tbody');
+  tbody.innerHTML='';
+  const curr=SHAPE_DATA[currentShape];
+  ALL_SHAPES_COMPARE.forEach(s=>{
+    const tr=document.createElement('tr');
+    if(curr && s.name.includes(curr.name.split(' ')[0])){
+      tr.classList.add('highlight-row');
+    }
+    tr.innerHTML=`<td>${s.name}</td><td>${s.faces}</td><td>${s.edges}</td><td>${s.vertices}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  2D MODE
+// ═══════════════════════════════════════════════
+const SHAPES_2D=[
+  { name:'Circle',    sides:0, corners:0, draw: (cx,cy,ctx)=>{ ctx.beginPath(); ctx.arc(cx,cy,70,0,Math.PI*2); } },
+  { name:'Triangle',  sides:3, corners:3, draw: (cx,cy,ctx)=>{ ctx.beginPath(); ctx.moveTo(cx,cy-70); ctx.lineTo(cx+65,cy+50); ctx.lineTo(cx-65,cy+50); ctx.closePath(); } },
+  { name:'Square',    sides:4, corners:4, draw: (cx,cy,ctx)=>{ ctx.beginPath(); ctx.rect(cx-55,cy-55,110,110); } },
+  { name:'Rectangle', sides:4, corners:4, draw: (cx,cy,ctx)=>{ ctx.beginPath(); ctx.rect(cx-80,cy-45,160,90); } },
+  { name:'Pentagon',  sides:5, corners:5, draw: (cx,cy,ctx)=>{ nGon(cx,cy,68,5,ctx,-Math.PI/2); } },
+  { name:'Hexagon',   sides:6, corners:6, draw: (cx,cy,ctx)=>{ nGon(cx,cy,65,6,ctx,0); } },
+];
+function nGon(cx,cy,r,n,ctx,offset=0){
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const a=offset+i/n*Math.PI*2;
+    i===0? ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r): ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+  }
+  ctx.closePath();
+}
+
+let selected2D=null;
+
+function init2D(){
+  const canvas=document.getElementById('canvas-2d');
+  const W=canvas.parentElement.clientWidth;
+  const H=canvas.parentElement.clientHeight-60;
+  canvas.width=W; canvas.height=H;
+  canvas.style.height=H+'px';
+
+  // Build shape grid in the info panel area — draw on canvas
+  draw2DGrid(canvas);
+}
+
+function draw2DGrid(canvas){
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f0f4ff';
+  ctx.fillRect(0,0,W,H);
+
+  const cols=3, rows=2;
+  const cellW=W/cols, cellH=H/rows;
+  SHAPES_2D.forEach((s,i)=>{
+    const col=i%cols, row=Math.floor(i/cols);
+    const cx=col*cellW+cellW/2, cy=row*cellH+cellH/2;
+
+    // Card bg
+    const isSelected=(selected2D===i);
+    ctx.fillStyle=isSelected? '#4361ee' : '#ffffff';
+    ctx.strokeStyle=isSelected? '#4361ee' : '#e2e8f0';
+    ctx.lineWidth=3;
+    roundRect(ctx, col*cellW+10, row*cellH+10, cellW-20, cellH-20, 18);
+    ctx.fill(); ctx.stroke();
+
+    // Draw shape
+    ctx.fillStyle=isSelected? 'rgba(255,255,255,0.25)' : 'rgba(67,97,238,0.18)';
+    ctx.strokeStyle=isSelected? '#ffffff' : '#4361ee';
+    ctx.lineWidth=3;
+    s.draw(cx, cy-15, ctx);
+    ctx.fill(); ctx.stroke();
+
+    // Label
+    ctx.fillStyle=isSelected? '#ffffff' : '#1a1a2e';
+    ctx.font='bold 15px Nunito, sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(s.name, cx, row*cellH+cellH-22);
+  });
+
+  // Click handler
+  canvas.onclick=(e)=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    const col=Math.floor(mx/cellW), row=Math.floor(my/cellH);
+    const idx=row*cols+col;
+    if(idx<SHAPES_2D.length){
+      selected2D=idx;
+      const s=SHAPES_2D[idx];
+      document.getElementById('shape-name-display').textContent=s.name;
+      document.getElementById('cnt-faces').textContent='—';
+      document.getElementById('cnt-edges').textContent=s.sides;
+      document.getElementById('cnt-vertices').textContent=s.corners;
+      document.getElementById('frac-faces').textContent='';
+      document.getElementById('frac-edges').textContent=' sides';
+      document.getElementById('frac-vertices').textContent=' corners';
+      document.getElementById('counters-area').style.display='flex';
+      draw2DGrid(canvas);
+    }
+  };
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+// ═══════════════════════════════════════════════
+//  STARTUP
+// ═══════════════════════════════════════════════
+window.addEventListener('load', ()=>{
+  init3D();
+  setLevel(1);
+});
+
+window.addEventListener('resize', ()=>{
+  if(!renderer) return;
+  const canvas=document.getElementById('three-canvas');
+  const W=canvas.parentElement.clientWidth;
+  const H=canvas.parentElement.clientHeight-60;
+  renderer.setSize(W,H);
+  camera.aspect=W/H;
+  camera.updateProjectionMatrix();
+});
+</script>
+</body>
+</html>
